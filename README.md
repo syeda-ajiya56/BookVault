@@ -59,3 +59,6 @@ Check the project:
 npm run lint
 npm run build
 ```
+
+## FE-05 Capstone
+BookVault capstone skeleton deployed with Next.js and Vercel.
