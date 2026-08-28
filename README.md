@@ -62,3 +62,16 @@ npm run build
 
 ## FE-05 Capstone
 BookVault capstone skeleton deployed with Next.js and Vercel.
+
+## AI Streaming Chat
+
+BookVault includes an OpenRouter-powered streaming reading assistant at `/ask-ai`. OpenRouter's free model router selects an available free model, responses stream progressively, generation can be stopped while preserving the text already received, and the conversation supports multiple turns.
+
+The OpenRouter API key is server-side only. Configure `OPENROUTER_API_KEY` in the root `.env.local` for local development or in the Vercel project environment variables for deployment. Never prefix it with `VITE_` or `NEXT_PUBLIC_`, or expose it in client code.
+
+Relevant files:
+
+- `src/lib/ai.ts` - OpenRouter model configuration and BookVault AI system prompt
+- `src/app/api/chat/route.ts` - server-side OpenRouter streaming route
+- `src/components/BookVaultAI.tsx` - accessible chat UI and streaming state
+- `src/components/BookVaultAI.css` - responsive chat styling

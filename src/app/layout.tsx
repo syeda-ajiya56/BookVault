@@ -12,6 +12,7 @@ const navigation = [
   { href: "/books", label: "Books" },
   { href: "/favorites", label: "Favorites" },
   { href: "/reading-list", label: "Reading List" },
+  { href: "/ask-ai", label: "Ask AI" },
   { href: "/about", label: "About" },
 ];
 
