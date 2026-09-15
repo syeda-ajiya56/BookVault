@@ -3,11 +3,47 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import './BookVaultAI.css'
+import BookRecommendationCard from './BookRecommendationCard'
 
 type Message = {
   role: 'user' | 'assistant'
   content: string
 }
+
+type BookResult = {
+  id: number
+  title: string
+  author: string
+  coverImage: string
+  description: string
+  publicationYear: number
+  genre: string
+}
+
+type ToolState =
+  | {
+      status: 'input-streaming'
+      toolName: string
+      arguments: string
+    }
+  | {
+      status: 'input-available'
+      toolName: string
+      arguments: string
+    }
+  | {
+      status: 'output-available'
+      toolName: string
+      result: {
+        query: string
+        books: BookResult[]
+      }
+    }
+  | {
+      status: 'output-error'
+      toolName: string
+      error: string
+  }
 
 const initialMessage: Message = {
   role: 'assistant',
@@ -18,6 +54,7 @@ export default function BookVaultAI() {
   const [messages, setMessages] = useState<Message[]>([initialMessage])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [toolState, setToolState] = useState<ToolState | null>(null)
   const [hasReceivedToken, setHasReceivedToken] = useState(false)
   const [error, setError] = useState('')
   const [lastFailedMessage, setLastFailedMessage] = useState('')
@@ -53,6 +90,7 @@ export default function BookVaultAI() {
     setInput('')
     setError('')
     setLastFailedMessage('')
+    setToolState(null)
     setIsStreaming(true)
     setHasReceivedToken(false)
     shouldAutoScroll.current = true
@@ -78,23 +116,165 @@ export default function BookVaultAI() {
       }
 
       const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const token = decoder.decode(value, { stream: true })
-        if (token) {
+const decoder = new TextDecoder()
+
+let buffer = ''
+
+while (true) {
+  const { done, value } = await reader.read()
+
+  buffer += decoder.decode(value, { stream: !done })
+
+  const events = buffer.split('\n\n')
+  buffer = events.pop() ?? ''
+
+  for (const event of events) {
+    const lines = event.split('\n')
+
+    let eventType = ''
+    let eventData = ''
+
+    for (const line of lines) {
+      if (line.startsWith('event:')) {
+        eventType = line.slice(6).trim()
+      }
+
+      if (line.startsWith('data:')) {
+        eventData = line.slice(5).trim()
+      }
+    }
+
+    if (!eventData) continue
+
+    try {
+      const data: unknown = JSON.parse(eventData)
+
+      if (eventType === 'text') {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'content' in data &&
+          typeof data.content === 'string'
+        ) {
           setHasReceivedToken(true)
+
           setMessages((current) => {
             const updated = [...current]
+
             updated[updated.length - 1] = {
               ...updated[updated.length - 1],
-              content: updated[updated.length - 1].content + token,
+              content:
+                updated[updated.length - 1].content + data.content,
             }
+
             return updated
           })
         }
       }
+
+      if (eventType === 'tool-input-streaming') {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'toolName' in data &&
+          typeof data.toolName === 'string' &&
+          'arguments' in data &&
+          typeof data.arguments === 'string'
+        ) {
+          setToolState({
+            status: 'input-streaming',
+            toolName: data.toolName,
+            arguments: data.arguments,
+          })
+        }
+      }
+
+      if (eventType === 'tool-input-available') {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'toolName' in data &&
+          typeof data.toolName === 'string' &&
+          'arguments' in data &&
+          typeof data.arguments === 'string'
+        ) {
+          setToolState({
+            status: 'input-available',
+            toolName: data.toolName,
+            arguments: data.arguments,
+          })
+        }
+      }
+
+      if (eventType === 'tool-output-available') {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'toolName' in data &&
+          typeof data.toolName === 'string' &&
+          'result' in data &&
+          data.result &&
+          typeof data.result === 'object'
+        ) {
+          const result = data.result as {
+            query?: unknown
+            books?: unknown
+          }
+
+          if (
+            typeof result.query === 'string' &&
+            Array.isArray(result.books)
+          ) {
+            setToolState({
+              status: 'output-available',
+              toolName: data.toolName,
+              result: {
+                query: result.query,
+                books: result.books as BookResult[],
+              },
+            })
+          }
+        }
+      }
+
+      if (eventType === 'tool-output-error') {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'toolName' in data &&
+          typeof data.toolName === 'string' &&
+          'error' in data &&
+          typeof data.error === 'string'
+        ) {
+          setToolState({
+            status: 'output-error',
+            toolName: data.toolName,
+            error: data.error,
+          })
+        }
+      }
+
+      if (eventType === 'error') {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'message' in data &&
+          typeof data.message === 'string'
+        ) {
+          throw new Error(data.message)
+        }
+      }
+    } catch (eventError) {
+      if (eventError instanceof Error) {
+        throw eventError
+      }
+
+      // Ignore malformed SSE events.
+    }
+  }
+
+  if (done) break
+}
     } catch (streamError) {
       if (streamError instanceof DOMException && streamError.name === 'AbortError') return
       setError(streamError instanceof Error ? streamError.message : 'Something went wrong. Please try again.')
@@ -150,6 +330,33 @@ export default function BookVaultAI() {
               </p>
             </article>
           ))}
+          {toolState?.status === 'input-streaming' && (
+  <div className="ai-chat__tool-status" role="status">
+    <span className="ai-chat__tool-dot" />
+    Searching BookVault...
+  </div>
+)}
+
+{toolState?.status === 'input-available' && (
+  <div className="ai-chat__tool-status" role="status">
+    <span className="ai-chat__tool-dot" />
+    Searching for books...
+  </div>
+)}
+
+{toolState?.status === 'output-available' && (
+  <BookRecommendationCard
+    query={toolState.result.query}
+    books={toolState.result.books}
+  />
+)}
+
+{toolState?.status === 'output-error' && (
+  <div className="ai-chat__tool-error" role="alert">
+    <strong>Book search failed</strong>
+    <p>{toolState.error}</p>
+  </div>
+)}
           {isStreaming && !hasReceivedToken && <p className="ai-chat__thinking" role="status">BookVault AI is thinking...</p>}
           <div ref={messagesEnd} />
         </div>
@@ -187,3 +394,4 @@ error && (
     </section>
   )
 }
+

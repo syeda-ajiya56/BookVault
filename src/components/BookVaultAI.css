@@ -214,3 +214,123 @@
     max-width: 13rem;
   }
 }
+
+.book-tool-card {
+  margin: 1rem 0;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.book-tool-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.book-tool-card__icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 1.2rem;
+}
+
+.book-tool-card__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.book-tool-card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.book-tool-card__results {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.book-tool-card__book {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 0.9rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.8rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.book-tool-card__cover {
+  width: 64px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 0.45rem;
+}
+
+.book-tool-card__details {
+  min-width: 0;
+}
+
+.book-tool-card__details h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.book-tool-card__author {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.book-tool-card__genre {
+  display: inline-block;
+  margin-top: 0.55rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.7rem;
+}
+
+.book-tool-card__description {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  opacity: 0.78;
+}
+
+.book-tool-card__year {
+  margin: 0.55rem 0 0;
+  font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+.book-tool-card__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+
+@media (max-width: 520px) {
+  .book-tool-card {
+    padding: 1rem;
+  }
+
+  .book-tool-card__book {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .book-tool-card__cover {
+    width: 52px;
+    height: 76px;
+  }
+}
