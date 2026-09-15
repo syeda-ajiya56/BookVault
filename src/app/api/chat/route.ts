@@ -11,6 +11,7 @@ function isChatMessage(value: unknown): value is ChatMessage {
   if (!value || typeof value !== 'object') return false
 
   const message = value as Record<string, unknown>
+
   return (
     (message.role === 'user' || message.role === 'assistant') &&
     typeof message.content === 'string' &&
@@ -20,19 +21,37 @@ function isChatMessage(value: unknown): value is ChatMessage {
 
 export async function POST(request: Request) {
   if (!process.env.OPENROUTER_API_KEY) {
-    return Response.json({ error: 'BookVault AI is not configured yet.' }, { status: 503 })
+    return Response.json(
+      { error: 'BookVault AI is not configured yet.' },
+      { status: 503 },
+    )
   }
 
   try {
     const body: unknown = await request.json()
-    const messages =
-      body && typeof body === 'object' && Array.isArray((body as { messages?: unknown }).messages)
-        ? (body as { messages: unknown[] }).messages
-        : null
 
-    if (!messages || messages.length === 0 || messages.length > 20 || !messages.every(isChatMessage)) {
-      return Response.json({ error: 'Please send a valid conversation.' }, { status: 400 })
-    }
+const messages: unknown[] =
+  body &&
+  typeof body === 'object' &&
+  Array.isArray((body as { messages?: unknown }).messages)
+    ? (body as { messages: unknown[] }).messages
+    : []
+
+if (messages.length === 0 || messages.length > 20) {
+  return Response.json(
+    { error: 'Please send a valid conversation.' },
+    { status: 400 },
+  )
+}
+
+if (!messages.every(isChatMessage)) {
+  return Response.json(
+    { error: 'Please send a valid conversation.' },
+    { status: 400 },
+  )
+}
+
+const validMessages = messages as ChatMessage[]
 
     const upstreamResponse = await fetch(OPENROUTER_ENDPOINT, {
       method: 'POST',
@@ -43,7 +62,10 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: AI_MODEL,
         max_tokens: AI_MAX_TOKENS,
-        messages: [{ role: 'system', content: AI_SYSTEM_PROMPT }, ...messages],
+        messages: [
+          { role: 'system', content: AI_SYSTEM_PROMPT },
+          ...validMessages,
+        ],
         stream: true,
       }),
       signal: request.signal,
@@ -51,13 +73,19 @@ export async function POST(request: Request) {
 
     if (!upstreamResponse.ok || !upstreamResponse.body) {
       return Response.json(
-        { error: 'BookVault AI is temporarily unavailable. Please try again.' },
-        { status: upstreamResponse.status === 429 ? 429 : 502 },
+        {
+          error:
+            'BookVault AI is temporarily unavailable. Please try again.',
+        },
+        {
+          status: upstreamResponse.status === 429 ? 429 : 502,
+        },
       )
     }
 
     const encoder = new TextEncoder()
     const decoder = new TextDecoder()
+
     const textStream = new ReadableStream<Uint8Array>({
       async start(controller) {
         const reader = upstreamResponse.body!.getReader()
@@ -66,7 +94,9 @@ export async function POST(request: Request) {
         try {
           while (true) {
             const { done, value } = await reader.read()
+
             buffer += decoder.decode(value, { stream: !done })
+
             const lines = buffer.split('\n')
             buffer = lines.pop() ?? ''
 
@@ -74,14 +104,20 @@ export async function POST(request: Request) {
               if (!line.startsWith('data:')) continue
 
               const data = line.slice(5).trim()
+
               if (data === '[DONE]') continue
 
               try {
                 const parsed: unknown = JSON.parse(data)
+
                 const content =
-                  parsed && typeof parsed === 'object' && 'choices' in parsed && Array.isArray(parsed.choices)
+                  parsed &&
+                  typeof parsed === 'object' &&
+                  'choices' in parsed &&
+                  Array.isArray(parsed.choices)
                     ? parsed.choices[0]?.delta?.content
                     : null
+
                 if (typeof content === 'string' && content) {
                   controller.enqueue(encoder.encode(content))
                 }
@@ -92,6 +128,7 @@ export async function POST(request: Request) {
 
             if (done) break
           }
+
           controller.close()
         } catch (error) {
           controller.error(error)
@@ -103,7 +140,7 @@ export async function POST(request: Request) {
       headers: {
         'Cache-Control': 'no-cache, no-transform',
         'Content-Type': 'text/plain; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff',
+        'X-Content-Type': 'nosniff',
       },
     })
   } catch {
@@ -111,6 +148,12 @@ export async function POST(request: Request) {
       return new Response(null, { status: 499 })
     }
 
-    return Response.json({ error: 'BookVault AI is temporarily unavailable. Please try again.' }, { status: 502 })
+    return Response.json(
+      {
+        error:
+          'BookVault AI is temporarily unavailable. Please try again.',
+      },
+      { status: 502 },
+    )
   }
 }

@@ -20,6 +20,7 @@ export default function BookVaultAI() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasReceivedToken, setHasReceivedToken] = useState(false)
   const [error, setError] = useState('')
+  const [lastFailedMessage, setLastFailedMessage] = useState('')
   const abortController = useRef<AbortController | null>(null)
   const messagesEnd = useRef<HTMLDivElement>(null)
   const scrollContainer = useRef<HTMLDivElement>(null)
@@ -39,9 +40,11 @@ export default function BookVaultAI() {
     shouldAutoScroll.current = distanceFromBottom < 96
   }
 
-  async function sendMessage(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault()
-    const content = input.trim()
+  async function sendMessage(
+  event?: FormEvent<HTMLFormElement>,
+  retryContent?: string, ) {
+  event?.preventDefault()
+  const content = (retryContent ?? input).trim()
     if (!content || isStreaming) return
 
     const nextMessages = [...messages, { role: 'user' as const, content }, { role: 'assistant' as const, content: '' }]
@@ -49,6 +52,7 @@ export default function BookVaultAI() {
     setMessages(nextMessages)
     setInput('')
     setError('')
+    setLastFailedMessage('')
     setIsStreaming(true)
     setHasReceivedToken(false)
     shouldAutoScroll.current = true
@@ -94,6 +98,7 @@ export default function BookVaultAI() {
     } catch (streamError) {
       if (streamError instanceof DOMException && streamError.name === 'AbortError') return
       setError(streamError instanceof Error ? streamError.message : 'Something went wrong. Please try again.')
+      setLastFailedMessage(content)
       setMessages((current) => {
         const lastMessage = current[current.length - 1]
         const previousMessage = current[current.length - 2]
@@ -107,6 +112,12 @@ export default function BookVaultAI() {
       setIsStreaming(false)
     }
   }
+
+  function retryMessage() {
+  if (!lastFailedMessage) return
+
+  void sendMessage(undefined, lastFailedMessage)
+}
 
   function stopGeneration() {
     abortController.current?.abort()
@@ -143,8 +154,15 @@ export default function BookVaultAI() {
           <div ref={messagesEnd} />
         </div>
 
-        {error && <p className="ai-chat__error" role="alert">{error}</p>}
-
+{ 
+error && (
+  <div className="ai-chat__error" role="alert">
+    <p>{error}</p>
+    <button type="button" onClick={retryMessage}>
+      Retry
+    </button>
+  </div>
+)}
         <form className="ai-chat__form" onSubmit={sendMessage}>
           <label className="ai-chat__label" htmlFor="ai-chat-input">Ask a question</label>
           <textarea
