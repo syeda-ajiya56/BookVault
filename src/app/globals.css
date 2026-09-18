@@ -27,6 +27,21 @@
   --font-serif: Georgia, "Times New Roman", serif;
 }
 
+@keyframes stateful-button-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  30% {
+    transform: translateX(-2px);
+  }
+
+  70% {
+    transform: translateX(2px);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
