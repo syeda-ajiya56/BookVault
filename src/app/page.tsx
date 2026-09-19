@@ -6,7 +6,7 @@ export default function HomePage() {
     <div className="space-y-16">
       <section className="relative overflow-hidden rounded-card bg-primary px-6 py-16 text-card sm:px-12 lg:px-20 lg:py-24">
         <div className="relative z-10 max-w-2xl space-y-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Your personal reading shelf</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-on-primary">Your personal reading shelf</p>
           <h1 className="max-w-xl text-5xl leading-[1.05] tracking-tight sm:text-6xl">Discover Your Next Great Read</h1>
           <p className="max-w-lg text-lg leading-8 text-card/80">BookVault is a quiet place to discover remarkable books and build a reading life that feels entirely your own.</p>
           <Link href="/books" className="inline-flex rounded-md bg-accent px-5 py-3 font-semibold text-accent-foreground transition hover:bg-accent/85">Explore Books</Link>

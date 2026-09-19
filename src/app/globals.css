@@ -5,10 +5,11 @@
   --foreground: #24313a;
   --primary: #6f263d;
   --primary-foreground: #fffdf9;
-  --accent: #b58a50;
+  --accent: #87632f;
+  --accent-on-primary: #d8b878;
   --accent-foreground: #30220f;
   --muted: #706b65;
-  --border: #ded8cf;
+  --border: #8f877d;
   --card: #fffdf9;
 }
 
@@ -18,6 +19,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
+  --color-accent-on-primary: var(--accent-on-primary);
   --color-accent-foreground: var(--accent-foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
