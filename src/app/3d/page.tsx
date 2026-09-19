@@ -1,5 +1,3 @@
-import BookVault3D from "@/components/BookVault3D";
-
 import BookVault3DLoader from "@/components/BookVault3DLoader";
 
 export default function ThreeDPage() {
