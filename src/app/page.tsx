@@ -1,9 +1,11 @@
 import Link from "next/link";
+import ShaderHero from "@/components/ShaderHero";
 import { featuredBooks } from "@/data/books";
 
 export default function HomePage() {
   return (
     <div className="space-y-16">
+      <ShaderHero />
       <section className="relative overflow-hidden rounded-card bg-primary px-6 py-16 text-card sm:px-12 lg:px-20 lg:py-24">
         <div className="relative z-10 max-w-2xl space-y-6">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-on-primary">Your personal reading shelf</p>
