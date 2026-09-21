@@ -440,6 +440,21 @@ The AI chat is tested across important states including:
 
 A Playwright test covers the primary application flow.
 
+## Coverage Evidence
+
+The latest local coverage run completed successfully with:
+
+- 12 tests passed.
+- 2 test files passed.
+- 76.03% statement coverage.
+- 57.77% branch coverage.
+- 78.57% function coverage.
+- 79.82% line coverage.
+
+Coverage was generated with Vitest and the V8 coverage provider.
+
+The coverage output is generated locally and is excluded from Git through `.gitignore`.
+
 ## Continuous Integration
 
 GitHub Actions runs the automated test suite on pushes to the repository.
@@ -477,13 +492,7 @@ Install dependencies:
 npm install
 ```
 
-Create the environment file:
-
-```bash
-.env.local
-```
-
-Add:
+Create a `.env.local` file in the project root:
 
 ```env
 OPENROUTER_API_KEY=your_openrouter_api_key
@@ -651,6 +660,34 @@ https://book-vault-ecru.vercel.app/
 ```
 
 The application is built using the Next.js production build and uses Vercel environment configuration for the server-side OpenRouter API key.
+
+---
+
+# Deployment Safety and Rollback
+
+BookVault is deployed through Vercel with the production environment configured separately from local development.
+
+Before a production release:
+
+1. Run the automated test suite.
+2. Run the production build.
+3. Verify the deployed application manually.
+4. Confirm that the AI route and fallback states behave correctly.
+5. Check the deployment after release.
+
+If a deployment introduces a regression, the previous known-good Vercel deployment can be restored through the Vercel deployment history.
+
+The application also includes fail-safe behavior for important failure cases:
+
+- Missing AI configuration produces a user-visible configuration error instead of exposing credentials.
+- Invalid AI requests are rejected server-side.
+- Upstream AI failures produce an accessible error state.
+- Tool failures produce an accessible search error state.
+- Aborted AI requests are handled without exposing internal errors.
+- WebGL-dependent experiences provide fallback behavior.
+- Reduced-motion users receive a less animated experience.
+
+The current application does not include external production monitoring or alerting. This is a known limitation and would be addressed in a future production iteration.
 
 ---
 
