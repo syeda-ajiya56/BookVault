@@ -31,26 +31,25 @@ The current catalog uses local mock book data. Authentication and a persistent d
 
 ## Screenshots
 
-Add screenshots from the production site here.
+### Home Page
 
-Recommended screenshots:
+![BookVault home page](docs/screenshots/home.png)
 
-1. Home / shader hero
-2. Book collection
-3. AI chat with generated book recommendations
-4. 3D book viewer
-5. Mobile responsive view
-6. Button state demo
+### Book Collection
 
-Example:
+![BookVault book collection](docs/screenshots/books.png)
 
-```text
-docs/screenshots/home.png
-docs/screenshots/books.png
-docs/screenshots/ai-search.png
-docs/screenshots/3d-viewer.png
-docs/screenshots/mobile.png
-```
+### AI Reading Assistant
+
+![BookVault AI reading assistant with book recommendations](docs/screenshots/ai-search.png)
+
+### Interactive 3D Viewer
+
+![BookVault interactive 3D viewer](docs/screenshots/3d-viewer.png)
+
+### Mobile Responsive View
+
+![BookVault mobile responsive interface](docs/screenshots/mobile.png)
 
 ---
 
