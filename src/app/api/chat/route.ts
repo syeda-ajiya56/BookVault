@@ -4,12 +4,18 @@ import {
   searchBooksTool,
 } from '@/lib/searchBooks'
 
+export const maxDuration = 60
+
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions'
 
 type ChatMessage = {
   role: 'user' | 'assistant'
   content: string
 }
+
+const MAX_MESSAGES = 20
+const MAX_MESSAGE_LENGTH = 2000
+const MAX_TOTAL_INPUT_LENGTH = 10000
 
 type ToolCall = {
   id: string
@@ -28,7 +34,8 @@ function isChatMessage(value: unknown): value is ChatMessage {
   return (
     (message.role === 'user' || message.role === 'assistant') &&
     typeof message.content === 'string' &&
-    message.content.trim().length > 0
+    message.content.trim().length > 0 &&
+    message.content.length <= MAX_MESSAGE_LENGTH
   )
 }
 
@@ -70,7 +77,7 @@ export async function POST(request: Request) {
         ? (body as { messages: unknown[] }).messages
         : []
 
-    if (messages.length === 0 || messages.length > 20) {
+    if (messages.length === 0 || messages.length > MAX_MESSAGES) {
       return Response.json(
         { error: 'Please send a valid conversation.' },
         { status: 400 },
@@ -85,6 +92,21 @@ export async function POST(request: Request) {
     }
 
     const validMessages = messages as ChatMessage[]
+
+    const totalInputLength = validMessages.reduce(
+      (total, message) => total + message.content.length,
+      0,
+    )
+
+    if (totalInputLength > MAX_TOTAL_INPUT_LENGTH) {
+      return Response.json(
+        {
+          error:
+            'Your conversation is too long. Please start a new conversation.',
+        },
+        { status: 400 },
+      )
+    }
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
